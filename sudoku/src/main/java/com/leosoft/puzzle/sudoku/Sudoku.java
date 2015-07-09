@@ -54,9 +54,9 @@ public class Sudoku {
 			}
 		}
 		int s1 = ((i / 3) * 3);
-		int e1 = ((i / 3 + 1) * 3);
+		int e1 = s1 + 3;
 		int s2 = ((j / 3) * 3);
-		int e2 = ((j / 3 + 1) * 3);
+		int e2 = s2 + 3;
 		for (int x = s1; x < e1; x++) {
 			for (int y = s2; y < e2; y++) {
 				if (x != i && y != j) {
@@ -213,21 +213,19 @@ public class Sudoku {
 	public void print(boolean isDebug) {
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
-				System.out.print(matrix[i * size + j] + "\t");
+				System.out.print(matrix[i * size + j] + "  ");
 			}
-			System.out.println();
-		}
-		if (isDebug) {
-			System.out.println();
-			for (int i = 0; i < size; i++) {
+			if (isDebug) {
+				System.out.print("\t\t");
 				for (int j = 0; j < size; j++) {
 					int index = i * size + j;
 					System.out.print(Integer
-							.bitCount(((limit[index]) | (limit[index] >> 9) | (limit[index] >> 18)) & 511) + "\t");
+							.bitCount(((limit[index]) | (limit[index] >> 9) | (limit[index] >> 18)) & 511) + "  ");
 				}
-				System.out.println();
 			}
+			System.out.println();
 		}
+
 		System.out.println("---------------------------------------");
 	}
 
