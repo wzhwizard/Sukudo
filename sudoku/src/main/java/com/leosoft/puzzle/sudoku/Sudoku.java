@@ -9,7 +9,6 @@ public class Sudoku {
 
 	private int[] matrix, limit;
 	private int size;
-	private int LIMIT_MARK = (1 << 29);
 
 	public Sudoku(String path) {
 		try {
@@ -24,77 +23,13 @@ public class Sudoku {
 					int index = i * size + j;
 					matrix[index] = Integer.valueOf(numbers[j]);
 					if (matrix[index] != 0) {
-						markChange(index);
-					}
-				}
-			}
-			for (int i = 0; i < size; i++) {
-				for (int j = 0; j < size; j++) {
-					int index = i * size + j;
-					if ((limit[index] & LIMIT_MARK) == LIMIT_MARK) {
-						refreshPoint(index);
+						applyChange(index, matrix[index]);
 					}
 				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private void markChange(int index) {
-		int i = index / size;
-		int j = index % size;
-		limit[index] = 0;
-		for (int k = 0; k < size; k++) {
-			if (k != j) {
-				limit[i * size + k] |= LIMIT_MARK;
-			}
-			if (k != i) {
-				limit[k * size + j] |= LIMIT_MARK;
-			}
-		}
-		int s1 = ((i / 3) * 3);
-		int e1 = s1 + 3;
-		int s2 = ((j / 3) * 3);
-		int e2 = s2 + 3;
-		for (int x = s1; x < e1; x++) {
-			for (int y = s2; y < e2; y++) {
-				if (x != i && y != j) {
-					limit[x * size + y] |= LIMIT_MARK;
-				}
-			}
-		}
-	}
-
-	private void refreshPoint(int index) {
-		int i = index / size;
-		int j = index % size;
-		limit[index] = 0;
-		if (matrix[index] == 0) {
-			for (int k = 0; k < size; k++) {
-				int matrxIndex = i * size + k;
-				if (k != j && matrix[matrxIndex] != 0) {
-					limit[index] |= (1 << (matrix[matrxIndex] - 1));
-				}
-				matrxIndex = k * size + j;
-				if (k != i && matrix[matrxIndex] != 0) {
-					limit[index] |= (1 << (matrix[matrxIndex] + 8));
-				}
-			}
-			int s1 = ((i / 3) * 3);
-			int e1 = s1 + 3;
-			int s2 = ((j / 3) * 3);
-			int e2 = s2 + 3;
-			for (int x = s1; x < e1; x++) {
-				for (int y = s2; y < e2; y++) {
-					int matrixValue = matrix[x * size + y];
-					if (x != i && y != j && matrixValue != 0) {
-						limit[index] |= (1 << (matrixValue + 17));
-					}
-				}
-			}
-		}
-
 	}
 
 	LinkedList<Solution> queue = new LinkedList<Solution>();
@@ -105,7 +40,7 @@ public class Sudoku {
 			while ((s = queue.poll()) != null) {
 				int i = s.getIndex();
 				int v = s.getValue();
-				refreshChange(i, v);
+				applyChange(i, v);
 				if (v != 0) {
 					break;
 				}
@@ -118,9 +53,10 @@ public class Sudoku {
 		int limitCount = -1, limitIndex = -1;
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
-				int limitValue = limit[i * size + j];
+				int index = i * size + j;
+				int limitValue = limit[index];
 				int temp = Integer.bitCount(((limitValue) | (limitValue >> 9) | (limitValue >> 18)) & 511);
-				if (limitValue > 0 && (limitIndex == -1 || temp > limitCount)) {
+				if (matrix[index] == 0 && (limitIndex == -1 || temp > limitCount)) {
 					limitIndex = i * size + j;
 					limitCount = temp;
 				}
@@ -144,18 +80,14 @@ public class Sudoku {
 		return result;
 	}
 
-	private void refreshChange(int index, int after) {
+	private void applyChange(int index, int value) {
 		int i = index / size;
 		int j = index % size;
 		int before = matrix[index];
-		matrix[index] = after;
+		matrix[index] = value;
 		for (int k = 0; k < size; k++) {
-			if (k != j) {
-				changePoint(i * size + k, before, after, -1);
-			}
-			if (k != i) {
-				changePoint(k * size + j, before, after, 8);
-			}
+			changePoint(i * size + k, before, value, -1);
+			changePoint(k * size + j, before, value, 8);
 		}
 		int s1 = ((i / 3) * 3);
 		int e1 = s1 + 3;
@@ -163,23 +95,16 @@ public class Sudoku {
 		int e2 = s2 + 3;
 		for (int x = s1; x < e1; x++) {
 			for (int y = s2; y < e2; y++) {
-				if (x != i && y != j) {
-					changePoint(x * size + y, before, after, 17);
-				}
+				changePoint(x * size + y, before, value, 17);
 			}
-		}
-		if (after == 0) {
-			refreshPoint(index);
-		} else {
-			limit[index] = 0;
 		}
 	}
 
 	private void changePoint(int i, int before, int after, int offset) {
-		if (before > 0 && limit[i] != 0) {
+		if (before != 0) {
 			limit[i] &= ~(1 << (before + offset));
 		}
-		if (after > 0 && limit[i] != 0) {
+		if (after != 0) {
 			limit[i] |= 1 << (after + offset);
 		}
 	}

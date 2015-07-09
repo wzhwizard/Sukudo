@@ -7,10 +7,10 @@ public class SudokuTest {
 	public void basic() {
 		Sudoku sudoku = new Sudoku("sudoku.txt");
 		sudoku.print(true);
-		long start = System.currentTimeMillis();
+		long start = System.nanoTime();
 		sudoku.solve();
-		long end = System.currentTimeMillis();
-		System.out.println("Time Cost: " + (end - start)  + " ms");
+		long end = System.nanoTime();
+		System.out.println("Time Cost: " + (end - start)/1000000f + " ms");
 		sudoku.print(true);
 	}
 }
