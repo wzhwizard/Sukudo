@@ -21,9 +21,9 @@ public class Sudoku {
 				String[] numbers = lines.get(i).split(" ");
 				for (int j = 0; j < numbers.length; j++) {
 					int index = i * size + j;
-					matrix[index] = Integer.valueOf(numbers[j]);
-					if (matrix[index] != 0) {
-						applyChange(index, matrix[index]);
+					int value = Integer.valueOf(numbers[j]);
+					if (value != 0) {
+						applyChange(index, value);
 					}
 				}
 			}
@@ -36,7 +36,7 @@ public class Sudoku {
 
 	public void solve() {
 		Solution s;
-		while (push()) {
+		while (pushPossiable()) {
 			while ((s = queue.poll()) != null) {
 				int i = s.getIndex();
 				int v = s.getValue();
@@ -48,30 +48,29 @@ public class Sudoku {
 		}
 	}
 
-	private boolean push() {
+	private boolean pushPossiable() {
 		boolean result = false;
-		int limitCount = -1, limitIndex = -1;
+		int limitCount = -1, foundIndex = -1;
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				int index = i * size + j;
 				int limitValue = limit[index];
-				int temp = Integer.bitCount(((limitValue) | (limitValue >> 9) | (limitValue >> 18)) & 511);
-				if (matrix[index] == 0 && (limitIndex == -1 || temp > limitCount)) {
-					limitIndex = i * size + j;
-					limitCount = temp;
+				int newCount = Integer.bitCount(((limitValue) | (limitValue >> 9) | (limitValue >> 18)) & 511);
+				if (matrix[index] == 0 && (foundIndex == -1 || newCount > limitCount)) {
+					foundIndex = i * size + j;
+					limitCount = newCount;
 				}
 			}
 		}
-
-		if (limitIndex != -1) {
+		if (foundIndex != -1) {
 			result = true;
-			int limitValue = ((limit[limitIndex]) | (limit[limitIndex] >> 9) | (limit[limitIndex] >> 18));
+			int limitValue = ((limit[foundIndex]) | (limit[foundIndex] >> 9) | (limit[foundIndex] >> 18)) & 511;
 			if (limitValue != 511) {
-				queue.addFirst(new Solution(limitIndex, 0));
+				queue.addFirst(new Solution(foundIndex, 0));
 				for (int number = 0; number < size; number++) {
 					int possiable = 1 << number;
 					if ((possiable & limitValue) != possiable) {
-						queue.addFirst(new Solution(limitIndex, number + 1));
+						queue.addFirst(new Solution(foundIndex, number + 1));
 					}
 				}
 			}
@@ -141,7 +140,7 @@ public class Sudoku {
 				System.out.print(matrix[i * size + j] + "  ");
 			}
 			if (isDebug) {
-				System.out.print("\t\t");
+				System.out.print("\t");
 				for (int j = 0; j < size; j++) {
 					int index = i * size + j;
 					System.out.print(Integer
