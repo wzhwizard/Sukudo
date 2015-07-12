@@ -1,6 +1,7 @@
 package com.leosoft.puzzle.sudoku;
 
-import java.util.LinkedList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -20,10 +21,9 @@ public class Sudoku {
 			for (int i = 0; i < size; i++) {
 				String[] numbers = lines.get(i).split(" ");
 				for (int j = 0; j < numbers.length; j++) {
-					int index = i * size + j;
 					int value = Integer.valueOf(numbers[j]);
 					if (value != 0) {
-						applyChange(index, value);
+						applyChange(i * size + j, value);
 					}
 				}
 			}
@@ -32,7 +32,7 @@ public class Sudoku {
 		}
 	}
 
-	LinkedList<Solution> queue = new LinkedList<Solution>();
+	private final Deque<Solution> queue = new ArrayDeque<Solution>(512);
 
 	public void solve() {
 		Solution s;
@@ -50,21 +50,22 @@ public class Sudoku {
 
 	private boolean pushPossiable() {
 		boolean result = false;
-		int limitCount = -1, foundIndex = -1;
+		int limitCount = -1, foundIndex = -1, limitValue = -1;
 		for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				int index = i * size + j;
-				int limitValue = limit[index];
-				int newCount = Integer.bitCount(((limitValue) | (limitValue >> 9) | (limitValue >> 18)) & 511);
-				if (matrix[index] == 0 && (foundIndex == -1 || newCount > limitCount)) {
-					foundIndex = i * size + j;
-					limitCount = newCount;
+				if (matrix[index] == 0) {
+					int newValue = ((limit[index]) | (limit[index] >> 9) | (limit[index] >> 18)) & 511;
+					int newCount = Integer.bitCount(newValue);
+					if (foundIndex == -1 || newCount > limitCount) {
+						foundIndex = i * size + j;
+						limitCount = newCount;
+						limitValue = newValue;
+					}
 				}
 			}
 		}
 		if (foundIndex != -1) {
-			result = true;
-			int limitValue = ((limit[foundIndex]) | (limit[foundIndex] >> 9) | (limit[foundIndex] >> 18)) & 511;
 			if (limitValue != 511) {
 				queue.addFirst(new Solution(foundIndex, 0));
 				for (int number = 0; number < size; number++) {
@@ -74,8 +75,8 @@ public class Sudoku {
 					}
 				}
 			}
+			result = true;
 		}
-
 		return result;
 	}
 
@@ -108,16 +109,10 @@ public class Sudoku {
 		}
 	}
 
-	private class Solution {
+	private final class Solution {
 
-		int index, value;
-
-		@Override
-		public String toString() {
-			int x = index / size + 1;
-			int y = index % size + 1;
-			return "Solution [x=" + x + ", y=" + y + ", value=" + value + "]";
-		}
+		private final int index;
+		private final int value;
 
 		public int getIndex() {
 			return index;
@@ -127,11 +122,17 @@ public class Sudoku {
 			return value;
 		}
 
-		public Solution(int index, int possiable) {
+		public Solution(final int index, final int possiable) {
 			this.index = index;
 			this.value = possiable;
 		}
 
+		@Override
+		public String toString() {
+			int x = index / size + 1;
+			int y = index % size + 1;
+			return "Solution [x=" + x + ", y=" + y + ", value=" + value + "]";
+		}
 	}
 
 	public void print(boolean isDebug) {
@@ -149,8 +150,7 @@ public class Sudoku {
 			}
 			System.out.println();
 		}
-
-		System.out.println("---------------------------------------");
+		System.out.println("---------------------------------------------------------------");
 	}
 
 }
