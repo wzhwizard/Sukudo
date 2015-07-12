@@ -32,12 +32,12 @@ public class Sudoku {
 		}
 	}
 
-	private final Deque<Solution> queue = new ArrayDeque<Solution>(512);
+	private final Deque<Solution> stack = new ArrayDeque<Solution>(512);
 
 	public void solve() {
 		Solution s;
 		while (pushPossiable()) {
-			while ((s = queue.poll()) != null) {
+			while ((s = stack.poll()) != null) {
 				int i = s.getIndex();
 				int v = s.getValue();
 				applyChange(i, v);
@@ -51,7 +51,7 @@ public class Sudoku {
 	private boolean pushPossiable() {
 		boolean result = false;
 		int limitCount = -1, foundIndex = -1, limitValue = -1;
-		for (int i = 0; i < size; i++) {
+		LOOP:for (int i = 0; i < size; i++) {
 			for (int j = 0; j < size; j++) {
 				int index = i * size + j;
 				if (matrix[index] == 0) {
@@ -61,17 +61,20 @@ public class Sudoku {
 						foundIndex = i * size + j;
 						limitCount = newCount;
 						limitValue = newValue;
+						if(limitCount==8){
+							break LOOP;
+						}
 					}
 				}
 			}
 		}
 		if (foundIndex != -1) {
 			if (limitValue != 511) {
-				queue.addFirst(new Solution(foundIndex, 0));
+				stack.addFirst(new Solution(foundIndex, 0));
 				for (int number = 0; number < size; number++) {
 					int possiable = 1 << number;
 					if ((possiable & limitValue) != possiable) {
-						queue.addFirst(new Solution(foundIndex, number + 1));
+						stack.addFirst(new Solution(foundIndex, number + 1));
 					}
 				}
 			}
